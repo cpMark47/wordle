@@ -221,3 +221,8 @@ async function submitGuess() {
 // Start Game
 // --------------------------------------
 initGame();
+
+function goHome() {
+  window.location.href = "../";
+}
+
