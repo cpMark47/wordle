@@ -200,18 +200,18 @@ async function submitGuess() {
   // Save progress after each valid guess
   saveGameState();
 
-  if (guess === secret) {
-    message.textContent = "🎉 You guessed it!";
-    input.disabled = true;
-    clearGameState();
-  } else if (attempts === maxAttempts - 1) {
-    message.textContent = `❌ Game Over! Word was ${secret}`;
-    input.disabled = true;
-    clearGameState();
-  } else {
-    message.textContent = "";
-    input.disabled = false;
-  }
+ if (guess === secret) {
+  message.textContent = "🎉 You guessed it!";
+  input.disabled = true;
+  clearGameState();
+  document.getElementById("homeBtn").style.display = "inline-block";
+} else if (attempts === maxAttempts - 1) {
+  message.textContent = `❌ Game Over! Word was ${secret}`;
+  input.disabled = true;
+  clearGameState();
+  document.getElementById("homeBtn").style.display = "inline-block";
+}
+
 
   attempts++;
   input.value = "";
@@ -225,4 +225,5 @@ initGame();
 function goHome() {
   window.location.href = "../";
 }
+
 
