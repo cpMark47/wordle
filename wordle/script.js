@@ -1,6 +1,19 @@
 let attempts = 0;
 const maxAttempts = 6;
 let secret = null;
+const funnyMessages = [
+  "😂 Nice try, but English says no!",
+  "🤨 That word just invented itself!",
+  "🧐 Even the dictionary is confused!",
+  "🚫 Not a word, my guy!",
+  "🤔 Creative… but not real.",
+  "😅 That’s from another universe!",
+  "📚 Dictionary be like: I don’t know her.",
+  "🙃 Close… but also very far.",
+  "🛑 Fake word detected!",
+  "🤣 Shakespeare didn’t write that one either!"
+];
+
 
 // --------------------------------------
 // Dictionary API Validation
@@ -103,10 +116,12 @@ async function submitGuess() {
 
   const valid = await isValidWord(guess);
   if (!valid) {
-    message.textContent = "❌ Not in word list";
-    input.disabled = false;
-    return;
-  }
+  const randomMsg = funnyMessages[Math.floor(Math.random() * funnyMessages.length)];
+  message.textContent = randomMsg;
+  input.disabled = false;
+  return;
+}
+
 
   const board = document.getElementById("board");
   const row = board.children[attempts];
@@ -143,3 +158,4 @@ async function submitGuess() {
 // Start Game
 // --------------------------------------
 initGame();
+
