@@ -19,25 +19,23 @@ const funnyMessages = [
 ];
 
 // --------------------------------------
-// Dictionary API Validation with Timeout
+// Dictionary API Validation (with timeout)
 // --------------------------------------
 async function isValidWord(word) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5000); // 5s timeout
+  const timeout = setTimeout(() => controller.abort(), 5000);
 
   try {
     const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word.toLowerCase())}`;
     const res = await fetch(url, { signal: controller.signal });
-
     clearTimeout(timeout);
 
     if (!res.ok) return false;
-
     const data = await res.json();
     return Array.isArray(data);
   } catch (error) {
     console.error("Dictionary API failed:", error);
-    return null; // null = API failed, not invalid word
+    return null; // API failed
   }
 }
 
@@ -48,7 +46,7 @@ function getStorageKey(word) {
   return `custom_wordle_state_${word}`;
 }
 
-function saveGameState() {
+function saveGameState(gameOver = false) {
   if (!secret) return;
 
   const board = document.getElementById("board");
@@ -67,7 +65,13 @@ function saveGameState() {
     rows.push({ guess, classes });
   }
 
-  const state = { secret, attempts, rows };
+  const state = {
+    secret,
+    attempts,
+    rows,
+    gameOver
+  };
+
   localStorage.setItem(getStorageKey(secret), JSON.stringify(state));
 }
 
@@ -92,20 +96,26 @@ function initGame() {
   createBoard();
 
   const savedState = localStorage.getItem(getStorageKey(secret));
+  if (!savedState) return;
 
-  if (savedState) {
-    const state = JSON.parse(savedState);
-    attempts = state.attempts;
+  const state = JSON.parse(savedState);
+  attempts = state.attempts;
 
-    const board = document.getElementById("board");
+  const board = document.getElementById("board");
 
-    state.rows.forEach((rowData, i) => {
-      const cells = board.children[i].children;
-      for (let j = 0; j < 5; j++) {
-        cells[j].textContent = rowData.guess[j];
-        cells[j].className = rowData.classes[j];
-      }
-    });
+  // Restore guesses
+  state.rows.forEach((rowData, i) => {
+    const cells = board.children[i].children;
+    for (let j = 0; j < 5; j++) {
+      cells[j].textContent = rowData.guess[j];
+      cells[j].className = rowData.classes[j];
+    }
+  });
+
+  // If game already ended
+  if (state.gameOver) {
+    document.getElementById("guessInput").disabled = true;
+    document.getElementById("homeBtn").style.display = "inline-block";
   }
 }
 
@@ -146,9 +156,8 @@ async function createGame() {
   shareBox.textContent = "⏳ Checking word...";
 
   const valid = await isValidWord(word);
-
   if (valid === null) {
-    alert("⚠️ Dictionary service unavailable. Try again later.");
+    alert("⚠️ Dictionary service unavailable.");
     shareBox.textContent = "";
     return;
   }
@@ -183,14 +192,12 @@ async function submitGuess() {
 
   const valid = await isValidWord(guess);
 
-  // API failed → don't freeze
   if (valid === null) {
-    message.textContent = "⚠️ Dictionary service is down. Try again.";
+    message.textContent = "⚠️ Dictionary service down. Try again.";
     input.disabled = false;
     return;
   }
 
-  // Invalid word → funny message
   if (!valid) {
     const randomMsg = funnyMessages[Math.floor(Math.random() * funnyMessages.length)];
     message.textContent = randomMsg;
@@ -214,31 +221,35 @@ async function submitGuess() {
     }
   }
 
-  // Save progress
-  saveGameState();
+  attempts++;
 
-  // Game end conditions
+  // Check result
   if (guess === secret) {
     message.textContent = "🎉 You guessed it!";
     input.disabled = true;
-    clearGameState();
+    saveGameState(true);
     document.getElementById("homeBtn").style.display = "inline-block";
-  } else if (attempts === maxAttempts - 1) {
-    message.textContent = `❌ Game Over! Word was ${secret}`;
-    input.disabled = true;
-    clearGameState();
-    document.getElementById("homeBtn").style.display = "inline-block";
-  } else {
-    message.textContent = "";
-    input.disabled = false;
+    return;
   }
 
-  attempts++;
+  if (attempts === maxAttempts) {
+    message.textContent = `❌ Game Over! Word was ${secret}`;
+    input.disabled = true;
+    saveGameState(true);
+    document.getElementById("homeBtn").style.display = "inline-block";
+    return;
+  }
+
+  // Save progress after normal guess
+  saveGameState(false);
+
+  message.textContent = "";
+  input.disabled = false;
   input.value = "";
 }
 
 // --------------------------------------
-// Go to Home
+// Go Home
 // --------------------------------------
 function goHome() {
   window.location.href = "../";
