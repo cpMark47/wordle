@@ -19,18 +19,25 @@ const funnyMessages = [
 ];
 
 // --------------------------------------
-// Dictionary API Validation
+// Dictionary API Validation with Timeout
 // --------------------------------------
 async function isValidWord(word) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000); // 5s timeout
+
   try {
     const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word.toLowerCase())}`;
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: controller.signal });
+
+    clearTimeout(timeout);
+
     if (!res.ok) return false;
+
     const data = await res.json();
     return Array.isArray(data);
   } catch (error) {
     console.error("Dictionary API failed:", error);
-    return false;
+    return null; // null = API failed, not invalid word
   }
 }
 
@@ -60,12 +67,7 @@ function saveGameState() {
     rows.push({ guess, classes });
   }
 
-  const state = {
-    secret,
-    attempts,
-    rows
-  };
-
+  const state = { secret, attempts, rows };
   localStorage.setItem(getStorageKey(secret), JSON.stringify(state));
 }
 
@@ -85,13 +87,12 @@ function initGame() {
 
   secret = urlWord.toUpperCase();
 
-  const savedState = localStorage.getItem(getStorageKey(secret));
-
   document.getElementById("createBox").style.display = "none";
   document.getElementById("gameBox").style.display = "block";
   createBoard();
 
-  // Restore previous game if exists
+  const savedState = localStorage.getItem(getStorageKey(secret));
+
   if (savedState) {
     const state = JSON.parse(savedState);
     attempts = state.attempts;
@@ -145,6 +146,13 @@ async function createGame() {
   shareBox.textContent = "⏳ Checking word...";
 
   const valid = await isValidWord(word);
+
+  if (valid === null) {
+    alert("⚠️ Dictionary service unavailable. Try again later.");
+    shareBox.textContent = "";
+    return;
+  }
+
   if (!valid) {
     alert("❌ Not a valid dictionary word!");
     shareBox.textContent = "";
@@ -174,6 +182,15 @@ async function submitGuess() {
   message.textContent = "⏳ Checking word...";
 
   const valid = await isValidWord(guess);
+
+  // API failed → don't freeze
+  if (valid === null) {
+    message.textContent = "⚠️ Dictionary service is down. Try again.";
+    input.disabled = false;
+    return;
+  }
+
+  // Invalid word → funny message
   if (!valid) {
     const randomMsg = funnyMessages[Math.floor(Math.random() * funnyMessages.length)];
     message.textContent = randomMsg;
@@ -197,33 +214,37 @@ async function submitGuess() {
     }
   }
 
-  // Save progress after each valid guess
+  // Save progress
   saveGameState();
 
- if (guess === secret) {
-  message.textContent = "🎉 You guessed it!";
-  input.disabled = true;
-  clearGameState();
-  document.getElementById("homeBtn").style.display = "inline-block";
-} else if (attempts === maxAttempts - 1) {
-  message.textContent = `❌ Game Over! Word was ${secret}`;
-  input.disabled = true;
-  clearGameState();
-  document.getElementById("homeBtn").style.display = "inline-block";
-}
-
+  // Game end conditions
+  if (guess === secret) {
+    message.textContent = "🎉 You guessed it!";
+    input.disabled = true;
+    clearGameState();
+    document.getElementById("homeBtn").style.display = "inline-block";
+  } else if (attempts === maxAttempts - 1) {
+    message.textContent = `❌ Game Over! Word was ${secret}`;
+    input.disabled = true;
+    clearGameState();
+    document.getElementById("homeBtn").style.display = "inline-block";
+  } else {
+    message.textContent = "";
+    input.disabled = false;
+  }
 
   attempts++;
   input.value = "";
 }
 
 // --------------------------------------
-// Start Game
+// Go to Home
 // --------------------------------------
-initGame();
-
 function goHome() {
   window.location.href = "../";
 }
 
-
+// --------------------------------------
+// Start Game
+// --------------------------------------
+initGame();
