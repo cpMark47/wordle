@@ -9,18 +9,19 @@
 
   <h1>🎯 Custom Wordle</h1>
 
-  <!-- Create Game -->
+  <!-- Create Game Section -->
   <div id="createBox">
-    <h3>Create a Wordle</h3>
+    <h3>Create a Word</h3>
     <input type="text" id="secretWord" maxlength="5" placeholder="Enter 5-letter word">
     <button onclick="createGame()">Create Link</button>
     <p id="shareLink"></p>
   </div>
 
-  <!-- Game Board -->
+  <!-- Game Section -->
   <div id="gameBox" style="display:none;">
     <h3>Guess the Word!</h3>
     <div id="board"></div>
+
     <input type="text" id="guessInput" maxlength="5" placeholder="Enter guess">
     <button onclick="submitGuess()">Submit</button>
     <p id="message"></p>
