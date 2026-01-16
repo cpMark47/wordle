@@ -2,31 +2,43 @@ let attempts = 0;
 const maxAttempts = 6;
 let secret = null;
 
-// Check word using free dictionary API
+// --------------------------------------
+// Dictionary API Validation
+// --------------------------------------
 async function isValidWord(word) {
   try {
-    const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word.toLowerCase()}`);
-    return res.ok; // true if valid, false if 404
-  } catch (err) {
-    console.error("Dictionary API error:", err);
+    const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word.toLowerCase())}`;
+    const res = await fetch(url);
+
+    if (!res.ok) return false; // 404 or error
+    const data = await res.json();
+
+    return Array.isArray(data); // Valid dictionary response
+  } catch (error) {
+    console.error("Dictionary API failed:", error);
     return false;
   }
 }
 
-// Initialize if word is in URL
+// --------------------------------------
+// Initialize Game from URL
+// --------------------------------------
 function initGame() {
   const params = new URLSearchParams(window.location.search);
   const urlWord = params.get("word");
 
   if (urlWord) {
     secret = urlWord.toUpperCase();
+
     document.getElementById("createBox").style.display = "none";
     document.getElementById("gameBox").style.display = "block";
     createBoard();
   }
 }
 
-// Create empty board
+// --------------------------------------
+// Create Board
+// --------------------------------------
 function createBoard() {
   const board = document.getElementById("board");
   board.innerHTML = "";
@@ -45,10 +57,13 @@ function createBoard() {
   }
 }
 
-// Create shareable game link
+// --------------------------------------
+// Create Shareable Game
+// --------------------------------------
 async function createGame() {
-  const word = document.getElementById("secretWord").value.toUpperCase();
+  const input = document.getElementById("secretWord");
   const shareBox = document.getElementById("shareLink");
+  const word = input.value.trim().toUpperCase();
 
   if (word.length !== 5) {
     alert("Word must be exactly 5 letters");
@@ -68,11 +83,13 @@ async function createGame() {
   shareBox.innerHTML = `🔗 Share this link:<br><a href="${link}" target="_blank">${link}</a>`;
 }
 
-// Submit guess
+// --------------------------------------
+// Submit Guess
+// --------------------------------------
 async function submitGuess() {
   const input = document.getElementById("guessInput");
   const message = document.getElementById("message");
-  const guess = input.value.toUpperCase();
+  const guess = input.value.trim().toUpperCase();
 
   if (guess.length !== 5) {
     alert("Guess must be exactly 5 letters");
@@ -122,5 +139,7 @@ async function submitGuess() {
   input.value = "";
 }
 
-// Start game if URL contains word
+// --------------------------------------
+// Start Game
+// --------------------------------------
 initGame();
