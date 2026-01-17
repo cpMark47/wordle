@@ -3,35 +3,43 @@
 <head>
   <meta charset="UTF-8">
   <title>Custom Wordle</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
   <h1>🎯 Custom Wordle</h1>
 
-  <!-- Create Game Section -->
+  <!-- Create Game -->
   <div id="createBox">
     <h3>Create a Word</h3>
-    <input type="text" id="secretWord" maxlength="5" placeholder="Enter 5-letter word">
+    <input type="text" id="secretWord" maxlength="5"
+           placeholder="Enter 5-letter word"
+           autocapitalize="characters" autocomplete="off">
     <button onclick="createGame()">Create Link</button>
     <p id="shareLink"></p>
   </div>
 
-  <!-- Game Section -->
+  <!-- Game -->
   <div id="gameBox" style="display:none;">
     <h3>Guess the Word!</h3>
+
     <div id="board"></div>
 
-    <input type="text" id="guessInput" maxlength="5" placeholder="Enter guess">
-    <button onclick="submitGuess()">Submit</button>
-    <p id="message"></p>
-    <button id="homeBtn" onclick="goHome()" style="display:none; margin-top:15px;">
-  🏠 Go to Home
-</button>
+    <input type="text" id="guessInput" maxlength="5"
+           placeholder="Enter guess"
+           autocapitalize="characters" autocomplete="off">
 
+    <button onclick="submitGuess()">Submit</button>
+
+    <p id="message"></p>
+
+    <button id="homeBtn" onclick="goHome()" style="display:none;">
+      🏠 Go to Home
+    </button>
   </div>
 
   <script src="script.js"></script>
 </body>
 </html>
-
