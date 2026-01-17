@@ -37,8 +37,9 @@ async function isValidWord(word) {
 
 // ---------------- STORAGE ----------------
 function key() {
-  return `wordle_${secret}`;
+  return `wordle_${currentGameId}`;
 }
+
 
 function saveState(gameOver = false) {
   const rows = [];
@@ -334,5 +335,6 @@ function goHome() {
 
 // ---------------- START ----------------
 initGame();
+
 
 
