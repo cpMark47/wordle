@@ -11,16 +11,24 @@
 <h1 class="title">Wordle</h1>
 
 <!-- 🟢 CREATE GAME -->
-<div id="createBox">
+<!-- 🟢 CREATE GAME -->
+<div id="createBox" class="card">
+  <h2>Create a Game</h2>
+
   <input
     id="secretWord"
     maxlength="5"
-    placeholder="ENTER SECRET WORD"
+    placeholder="ENTER 5-LETTER WORD"
     autocomplete="off"
   />
-  <button onclick="createGame()">🎯 Create Game</button>
+
+  <button class="primary-btn" onclick="createGame()">
+    🎯 Create Game
+  </button>
+
   <div id="shareLink"></div>
 </div>
+
 
 <!-- 🟢 PLAY GAME -->
 <div id="gameBox" style="display:none;">
@@ -47,3 +55,4 @@
 <script src="script.js"></script>
 </body>
 </html>
+
