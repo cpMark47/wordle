@@ -35,7 +35,7 @@ async function isValidWord(word) {
     return Array.isArray(data);
   } catch (error) {
     console.error("Dictionary API failed:", error);
-    return null; // API failed
+    return null;
   }
 }
 
@@ -65,19 +65,8 @@ function saveGameState(gameOver = false) {
     rows.push({ guess, classes });
   }
 
-  const state = {
-    secret,
-    attempts,
-    rows,
-    gameOver
-  };
-
+  const state = { secret, attempts, rows, gameOver };
   localStorage.setItem(getStorageKey(secret), JSON.stringify(state));
-}
-
-function clearGameState() {
-  if (!secret) return;
-  localStorage.removeItem(getStorageKey(secret));
 }
 
 // --------------------------------------
@@ -103,7 +92,6 @@ function initGame() {
 
   const board = document.getElementById("board");
 
-  // Restore guesses
   state.rows.forEach((rowData, i) => {
     const cells = board.children[i].children;
     for (let j = 0; j < 5; j++) {
@@ -112,7 +100,6 @@ function initGame() {
     }
   });
 
-  // If game already ended
   if (state.gameOver) {
     document.getElementById("guessInput").disabled = true;
     document.getElementById("homeBtn").style.display = "inline-block";
@@ -223,7 +210,6 @@ async function submitGuess() {
 
   attempts++;
 
-  // Check result
   if (guess === secret) {
     message.textContent = "🎉 You guessed it!";
     input.disabled = true;
@@ -240,7 +226,6 @@ async function submitGuess() {
     return;
   }
 
-  // Save progress after normal guess
   saveGameState(false);
 
   message.textContent = "";
