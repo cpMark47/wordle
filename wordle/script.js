@@ -105,12 +105,22 @@ currentGameId = gameId;
   restoreKeyboard();
 
   const saved = localStorage.getItem(key());
- if (!saved) {
+if (!saved) {
   attempts = 0;
   keyboardState = {};
   saveKeyboardState();
+
+  // ✅ RESET UI PROPERLY
+  document.getElementById("guessInput").disabled = false;
+  document.getElementById("guessInput").value = "";
+  document.getElementById("message").textContent = "";
+  document.getElementById("homeBtn").style.display = "none";
+  document.getElementById("board").classList.remove("win");
+
+  restoreKeyboard();
   return;
 }
+
 
 
   const state = JSON.parse(saved);
@@ -352,6 +362,7 @@ function goHome() {
 
 // ---------------- START ----------------
 initGame();
+
 
 
 
