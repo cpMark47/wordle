@@ -3,50 +3,49 @@ body {
   text-align: center;
   background: #121213;
   color: white;
+  margin: 0;
+  padding: 10px;
 }
 
 h1 {
-  margin-top: 20px;
+  margin-top: 10px;
+  font-size: 32px;
 }
 
-input {
-  padding: 10px;
-  font-size: 16px;
-  text-transform: uppercase;
-  border-radius: 4px;
-  border: none;
-  margin: 5px;
+h3 {
+  margin-bottom: 10px;
 }
 
-button {
-  padding: 10px 15px;
-  font-size: 16px;
-  cursor: pointer;
-  border-radius: 4px;
-  border: none;
+/* Containers */
+#createBox, #gameBox {
+  max-width: 360px;
+  margin: 0 auto;
 }
 
+/* Board */
 #board {
   margin: 20px auto;
-  width: 260px;
+  width: 100%;
+  max-width: 320px;
 }
 
 .row {
   display: flex;
   justify-content: center;
-  margin-bottom: 5px;
+  margin-bottom: 6px;
 }
 
+/* Cells */
 .cell {
-  width: 45px;
-  height: 45px;
+  width: 52px;
+  height: 52px;
   border: 2px solid #3a3a3c;
   margin: 2px;
-  line-height: 45px;
-  font-size: 22px;
+  line-height: 52px;
+  font-size: 24px;
   font-weight: bold;
   text-transform: uppercase;
-  display: inline-block;
+  box-sizing: border-box;
 }
 
 .correct {
@@ -64,7 +63,49 @@ button {
   border-color: #3a3a3c;
 }
 
+/* Inputs & Buttons */
+input, button {
+  width: 90%;
+  max-width: 300px;
+  padding: 12px;
+  font-size: 18px;
+  margin: 8px auto;
+  display: block;
+  border-radius: 6px;
+  border: none;
+}
+
+button {
+  cursor: pointer;
+  background: #538d4e;
+  color: white;
+  font-weight: bold;
+}
+
+button:hover {
+  background: #6aaa64;
+}
+
 #message {
   margin-top: 10px;
-  font-size: 16px;
+  min-height: 22px;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 480px) {
+  h1 {
+    font-size: 26px;
+  }
+
+  .cell {
+    width: 46px;
+    height: 46px;
+    font-size: 20px;
+    line-height: 46px;
+  }
+
+  input, button {
+    font-size: 16px;
+    padding: 10px;
+  }
 }
