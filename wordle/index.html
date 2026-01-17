@@ -10,7 +10,20 @@
 
 <h1 class="title">Wordle</h1>
 
-<div id="gameBox">
+<!-- 🟢 CREATE GAME -->
+<div id="createBox">
+  <input
+    id="secretWord"
+    maxlength="5"
+    placeholder="ENTER SECRET WORD"
+    autocomplete="off"
+  />
+  <button onclick="createGame()">🎯 Create Game</button>
+  <div id="shareLink"></div>
+</div>
+
+<!-- 🟢 PLAY GAME -->
+<div id="gameBox" style="display:none;">
   <div id="board"></div>
 
   <input
@@ -22,7 +35,6 @@
 
   <div id="message"></div>
 
-  <!-- ⌨️ KEYBOARD -->
   <div id="keyboard">
     <div class="key-row" data-keys="Q W E R T Y U I O P"></div>
     <div class="key-row" data-keys="A S D F G H J K L"></div>
