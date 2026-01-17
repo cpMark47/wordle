@@ -5,22 +5,83 @@
 
 body {
   margin: 0;
-  padding: 12px;
+  padding: 16px;
   background: #121213;
   color: white;
-  text-align: center;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .title {
-  margin-bottom: 10px;
+  margin: 12px 0 16px;
+  font-size: 28px;
+}
+
+/* ---------- CARD (Create / Home) ---------- */
+.card {
+  width: 100%;
+  max-width: 360px;
+  background: #1a1a1b;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+}
+
+.card h2 {
+  margin: 0 0 14px;
+  font-size: 20px;
+}
+
+/* ---------- INPUT ---------- */
+input {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 12px;
+  font-size: 18px;
+  text-align: center;
+  text-transform: uppercase;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+}
+
+/* ---------- BUTTON ---------- */
+.primary-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 18px;
+  border-radius: 8px;
+  border: none;
+  background: #6aaa64;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.primary-btn:active {
+  transform: scale(0.97);
+}
+
+/* ---------- SHARE LINK ---------- */
+#shareLink {
+  margin-top: 14px;
+  font-size: 15px;
+  text-align: center;
+}
+
+/* ---------- GAME BOARD ---------- */
+#gameBox {
+  width: 100%;
+  max-width: 420px;
 }
 
 #board {
   display: grid;
   grid-template-rows: repeat(6, 1fr);
   gap: 6px;
-  max-width: 320px;
-  margin: 0 auto 10px;
+  margin-bottom: 12px;
 }
 
 .row {
@@ -30,7 +91,6 @@ body {
 }
 
 .cell {
-  width: 100%;
   aspect-ratio: 1 / 1;
   border: 2px solid #3a3a3c;
   display: flex;
@@ -45,20 +105,14 @@ body {
 .present { background: #c9b458; }
 .absent  { background: #787c7e; }
 
-#guessInput {
-  margin: 8px auto;
-  padding: 10px;
-  font-size: 18px;
-  width: 160px;
-  text-align: center;
-  text-transform: uppercase;
-}
-
+/* ---------- MESSAGE ---------- */
 #message {
-  height: 20px;
+  min-height: 22px;
   margin-bottom: 8px;
+  text-align: center;
 }
 
+/* ---------- KEYBOARD ---------- */
 #keyboard {
   margin-top: 8px;
 }
@@ -70,7 +124,7 @@ body {
 }
 
 .key {
-  min-width: 34px;
+  min-width: 32px;
   padding: 12px 6px;
   margin: 2px;
   border-radius: 6px;
@@ -85,13 +139,17 @@ body {
 .key.present { background: #c9b458; color: white; }
 .key.absent  { background: #787c7e; color: white; }
 
+/* ---------- HOME BUTTON ---------- */
 #homeBtn {
-  display: none;
-  margin-top: 10px;
-  padding: 8px 14px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: none;
 }
 
-/* 🎉 Win animation */
+/* ---------- WIN ANIMATION ---------- */
 .win .cell {
   animation: bounce 0.6s ease;
 }
@@ -100,4 +158,15 @@ body {
   0% { transform: scale(1); }
   50% { transform: scale(1.15); }
   100% { transform: scale(1); }
+}
+
+/* ---------- DESKTOP ENHANCEMENT ---------- */
+@media (min-width: 768px) {
+  body {
+    justify-content: center;
+  }
+
+  .title {
+    font-size: 32px;
+  }
 }
