@@ -1,6 +1,8 @@
 let attempts = 0;
 const maxAttempts = 6;
 let secret = null;
+let currentGameId = null;
+
 
 // ---------------- FUNNY MESSAGES ----------------
 const funnyMessages = [
@@ -67,7 +69,14 @@ function initGame() {
 
   // Hash present → Play Game
   try {
-    secret = atob(location.hash.substring(1)).toUpperCase();
+    const hash = location.hash.substring(1);
+const [gameId, encodedWord] = hash.split(".");
+
+if (!gameId || !encodedWord) return;
+
+secret = atob(encodedWord).toUpperCase();
+currentGameId = gameId;
+
   } catch {
     return;
   }
@@ -290,9 +299,16 @@ async function createGame() {
   localStorage.removeItem("keyboardState");
 
   // Encode word so it doesn't appear in URL
-  const encoded = btoa(word);
-  const link =
-    `${window.location.origin}${window.location.pathname}#${encoded}`;
+  // Generate unique game id
+const gameId = Date.now();
+
+// Encode word
+const encodedWord = btoa(word);
+
+// Final link
+const link =
+  `${window.location.origin}${window.location.pathname}#${gameId}.${encodedWord}`;
+
 
   // Click-to-copy UI
   shareBox.innerHTML = `
@@ -318,4 +334,5 @@ function goHome() {
 
 // ---------------- START ----------------
 initGame();
+
 
