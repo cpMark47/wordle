@@ -15,8 +15,8 @@ const funnyMessages = [
 ];
 
 // ---------------- KEYBOARD STATE ----------------
-const keyboardState =
-  JSON.parse(localStorage.getItem("keyboardState")) || {};
+let keyboardState = {};
+
 
 // ---------------- DICTIONARY CHECK ----------------
 async function isValidWord(word) {
@@ -39,6 +39,19 @@ async function isValidWord(word) {
 function key() {
   return `wordle_${currentGameId}`;
 }
+
+function loadKeyboardState() {
+  keyboardState =
+    JSON.parse(localStorage.getItem(`keyboard_${currentGameId}`)) || {};
+}
+
+function saveKeyboardState() {
+  localStorage.setItem(
+    `keyboard_${currentGameId}`,
+    JSON.stringify(keyboardState)
+  );
+}
+
 
 
 function saveState(gameOver = false) {
@@ -77,6 +90,8 @@ if (!gameId || !encodedWord) return;
 
 secret = atob(encodedWord).toUpperCase();
 currentGameId = gameId;
+    loadKeyboardState();
+
 
   } catch {
     return;
@@ -90,7 +105,13 @@ currentGameId = gameId;
   restoreKeyboard();
 
   const saved = localStorage.getItem(key());
-  if (!saved) return;
+ if (!saved) {
+  attempts = 0;
+  keyboardState = {};
+  saveKeyboardState();
+  return;
+}
+
 
   const state = JSON.parse(saved);
   attempts = state.attempts;
@@ -162,13 +183,10 @@ function updateKeyboard(letter, state) {
   if (current === "present" && state === "absent") return;
 
   keyboardState[letter] = state;
-  localStorage.setItem(
-    "keyboardState",
-    JSON.stringify(keyboardState)
-  );
-
+  saveKeyboardState();
   restoreKeyboard();
 }
+
 
 function restoreKeyboard() {
   document.querySelectorAll(".key").forEach(k => {
@@ -177,6 +195,7 @@ function restoreKeyboard() {
     if (state) k.classList.add(state);
   });
 }
+
 
 // ---------------- COLOR LOGIC ----------------
 function colorGuess(row, guess) {
@@ -296,8 +315,6 @@ async function createGame() {
     return;
   }
 
-  // ✅ CLEAR OLD GAME + KEYBOARD STATE
-  localStorage.removeItem("keyboardState");
 
   // Encode word so it doesn't appear in URL
   // Generate unique game id
@@ -335,6 +352,7 @@ function goHome() {
 
 // ---------------- START ----------------
 initGame();
+
 
 
 
