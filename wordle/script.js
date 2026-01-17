@@ -2,113 +2,89 @@ let attempts = 0;
 const maxAttempts = 6;
 let secret = null;
 
-// --------------------------------------
-// Funny Messages
-// --------------------------------------
+// ---------------- FUNNY MESSAGES ----------------
 const funnyMessages = [
-  "😂 Nice try, but English says no!",
+  "😂 English says no!",
   "🤨 That word just invented itself!",
-  "🧐 Even the dictionary is confused!",
-  "🚫 Not a word, my guy!",
-  "🤔 Creative… but not real.",
-  "😅 That’s from another universe!",
-  "📚 Dictionary be like: I don’t know her.",
-  "🙃 Close… but also very far.",
-  "🛑 Fake word detected!",
-  "🤣 Shakespeare didn’t write that one either!"
+  "🧐 Dictionary is confused!",
+  "🚫 Fake word detected!",
+  "😅 From another universe!",
+  "🤣 Shakespeare didn’t write that!"
 ];
 
-// --------------------------------------
-// Dictionary API Validation (with timeout)
-// --------------------------------------
+// ---------------- DICTIONARY CHECK ----------------
 async function isValidWord(word) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5000);
+  setTimeout(() => controller.abort(), 5000);
 
   try {
-    const url = `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word.toLowerCase())}`;
-    const res = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeout);
-
+    const res = await fetch(
+      `https://api.dictionaryapi.dev/api/v2/entries/en/${word.toLowerCase()}`,
+      { signal: controller.signal }
+    );
     if (!res.ok) return false;
-    const data = await res.json();
-    return Array.isArray(data);
-  } catch (error) {
-    console.error("Dictionary API failed:", error);
+    return Array.isArray(await res.json());
+  } catch {
     return null;
   }
 }
 
-// --------------------------------------
-// Storage Helpers (per word)
-// --------------------------------------
-function getStorageKey(word) {
-  return `custom_wordle_state_${word}`;
+// ---------------- STORAGE ----------------
+function key() {
+  return `wordle_${secret}`;
 }
 
-function saveGameState(gameOver = false) {
-  if (!secret) return;
-
-  const board = document.getElementById("board");
+function saveState(gameOver = false) {
   const rows = [];
+  const board = document.getElementById("board");
 
   for (let i = 0; i < attempts; i++) {
     const cells = board.children[i].children;
-    let guess = "";
-    let classes = [];
-
-    for (let j = 0; j < 5; j++) {
-      guess += cells[j].textContent;
-      classes.push(cells[j].className);
-    }
-
-    rows.push({ guess, classes });
+    rows.push({
+      guess: [...cells].map(c => c.textContent).join(""),
+      classes: [...cells].map(c => c.className)
+    });
   }
 
-  const state = { secret, attempts, rows, gameOver };
-  localStorage.setItem(getStorageKey(secret), JSON.stringify(state));
+  localStorage.setItem(key(), JSON.stringify({ attempts, rows, gameOver }));
 }
 
-// --------------------------------------
-// Initialize / Restore Game
-// --------------------------------------
+// ---------------- INIT GAME ----------------
 function initGame() {
-  const params = new URLSearchParams(window.location.search);
-  const urlWord = params.get("word");
+  if (!location.hash) return;
 
-  if (!urlWord) return;
-
-  secret = urlWord.toUpperCase();
+  try {
+    secret = atob(location.hash.substring(1)).toUpperCase();
+  } catch {
+    return;
+  }
 
   document.getElementById("createBox").style.display = "none";
   document.getElementById("gameBox").style.display = "block";
+
   createBoard();
 
-  const savedState = localStorage.getItem(getStorageKey(secret));
-  if (!savedState) return;
+  const saved = localStorage.getItem(key());
+  if (!saved) return;
 
-  const state = JSON.parse(savedState);
+  const state = JSON.parse(saved);
   attempts = state.attempts;
 
-  const board = document.getElementById("board");
-
-  state.rows.forEach((rowData, i) => {
-    const cells = board.children[i].children;
-    for (let j = 0; j < 5; j++) {
-      cells[j].textContent = rowData.guess[j];
-      cells[j].className = rowData.classes[j];
-    }
+  state.rows.forEach((row, i) => {
+    const cells = document.getElementById("board").children[i].children;
+    row.guess.split("").forEach((ch, j) => {
+      cells[j].textContent = ch;
+      cells[j].className = row.classes[j];
+    });
   });
 
   if (state.gameOver) {
     document.getElementById("guessInput").disabled = true;
-    document.getElementById("homeBtn").style.display = "inline-block";
+    document.getElementById("homeBtn").style.display = "block";
   }
 }
 
-// --------------------------------------
-// Create Board
-// --------------------------------------
+// ---------------- BOARD ----------------
 function createBoard() {
   const board = document.getElementById("board");
   board.innerHTML = "";
@@ -122,125 +98,75 @@ function createBoard() {
       cell.className = "cell";
       row.appendChild(cell);
     }
-
     board.appendChild(row);
   }
 }
 
-// --------------------------------------
-// Create Shareable Game
-// --------------------------------------
+// ---------------- CREATE GAME ----------------
 async function createGame() {
-  const input = document.getElementById("secretWord");
-  const shareBox = document.getElementById("shareLink");
-  const word = input.value.trim().toUpperCase();
-
-  if (word.length !== 5) {
-    alert("Word must be exactly 5 letters");
-    return;
-  }
-
-  shareBox.textContent = "⏳ Checking word...";
+  const word = document.getElementById("secretWord").value.toUpperCase();
+  if (word.length !== 5) return alert("Enter 5-letter word");
 
   const valid = await isValidWord(word);
-  if (valid === null) {
-    alert("⚠️ Dictionary service unavailable.");
-    shareBox.textContent = "";
-    return;
-  }
+  if (!valid) return alert("Invalid word");
 
-  if (!valid) {
-    alert("❌ Not a valid dictionary word!");
-    shareBox.textContent = "";
-    return;
-  }
-
-  const link = `${window.location.origin}${window.location.pathname}?word=${word}`;
-  shareBox.innerHTML = `🔗 Share this link:<br><a href="${link}" target="_blank">${link}</a>`;
+  const encoded = btoa(word);
+  const link = `${location.origin}${location.pathname}#${encoded}`;
+  document.getElementById("shareLink").innerHTML =
+    `🔗 Share:<br><a href="${link}">${link}</a>`;
 }
 
-// --------------------------------------
-// Submit Guess
-// --------------------------------------
+// ---------------- SUBMIT GUESS ----------------
 async function submitGuess() {
   const input = document.getElementById("guessInput");
-  const message = document.getElementById("message");
-  const guess = input.value.trim().toUpperCase();
+  const msg = document.getElementById("message");
+  const guess = input.value.toUpperCase();
 
-  if (guess.length !== 5) {
-    alert("Guess must be exactly 5 letters");
-    return;
-  }
-
-  if (attempts >= maxAttempts) return;
+  if (guess.length !== 5) return;
 
   input.disabled = true;
-  message.textContent = "⏳ Checking word...";
+  msg.textContent = "⏳ Checking...";
 
   const valid = await isValidWord(guess);
-
   if (valid === null) {
-    message.textContent = "⚠️ Dictionary service down. Try again.";
+    msg.textContent = "⚠️ Dictionary offline";
     input.disabled = false;
     return;
   }
 
   if (!valid) {
-    const randomMsg = funnyMessages[Math.floor(Math.random() * funnyMessages.length)];
-    message.textContent = randomMsg;
+    msg.textContent = funnyMessages[Math.floor(Math.random() * funnyMessages.length)];
     input.disabled = false;
     return;
   }
 
-  const board = document.getElementById("board");
-  const row = board.children[attempts];
-  const cells = row.children;
-
-  for (let i = 0; i < 5; i++) {
-    cells[i].textContent = guess[i];
-
-    if (guess[i] === secret[i]) {
-      cells[i].classList.add("correct");
-    } else if (secret.includes(guess[i])) {
-      cells[i].classList.add("present");
-    } else {
-      cells[i].classList.add("absent");
-    }
-  }
+  const row = document.getElementById("board").children[attempts];
+  [...row.children].forEach((cell, i) => {
+    cell.textContent = guess[i];
+    if (guess[i] === secret[i]) cell.classList.add("correct");
+    else if (secret.includes(guess[i])) cell.classList.add("present");
+    else cell.classList.add("absent");
+  });
 
   attempts++;
 
-  if (guess === secret) {
-    message.textContent = "🎉 You guessed it!";
-    input.disabled = true;
-    saveGameState(true);
-    document.getElementById("homeBtn").style.display = "inline-block";
+  if (guess === secret || attempts === maxAttempts) {
+    msg.textContent = guess === secret ? "🎉 You won!" : `❌ Word was ${secret}`;
+    saveState(true);
+    document.getElementById("homeBtn").style.display = "block";
     return;
   }
 
-  if (attempts === maxAttempts) {
-    message.textContent = `❌ Game Over! Word was ${secret}`;
-    input.disabled = true;
-    saveGameState(true);
-    document.getElementById("homeBtn").style.display = "inline-block";
-    return;
-  }
-
-  saveGameState(false);
-
-  message.textContent = "";
-  input.disabled = false;
+  saveState();
   input.value = "";
+  input.disabled = false;
+  msg.textContent = "";
 }
 
-// --------------------------------------
-// Go Home
-// --------------------------------------
+// ---------------- HOME ----------------
 function goHome() {
   window.location.href = "../";
 }
 
-// --------------------------------------
-// Start Game
-// --------------------------------------
+// ---------------- START ----------------
 initGame();
