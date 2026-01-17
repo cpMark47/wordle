@@ -58,19 +58,26 @@ function saveState(gameOver = false) {
 
 // ---------------- INIT GAME ----------------
 function initGame() {
-  if (!location.hash) return;
+  if (!location.hash) {
+    // No hash → show Create Game
+    document.getElementById("createBox").style.display = "block";
+    document.getElementById("gameBox").style.display = "none";
+    return;
+  }
 
+  // Hash present → Play Game
   try {
     secret = atob(location.hash.substring(1)).toUpperCase();
   } catch {
     return;
   }
 
-  document.getElementById("createBox")?.style.setProperty("display", "none");
+  document.getElementById("createBox").style.display = "none";
   document.getElementById("gameBox").style.display = "block";
 
   createBoard();
   createKeyboard();
+  restoreKeyboard();
 
   const saved = localStorage.getItem(key());
   if (!saved) return;
@@ -87,14 +94,13 @@ function initGame() {
     });
   });
 
-  restoreKeyboard();
-
   if (state.gameOver) {
     document.getElementById("guessInput").disabled = true;
     document.getElementById("homeBtn").style.display = "block";
     document.getElementById("board").classList.add("win");
   }
 }
+
 
 // ---------------- BOARD ----------------
 function createBoard() {
@@ -253,6 +259,58 @@ function copyToClipboard(text) {
   });
 }
 
+// ---------------- CREATE GAME ----------------
+async function createGame() {
+  const input = document.getElementById("secretWord");
+  const shareBox = document.getElementById("shareLink");
+
+  const word = input.value.trim().toUpperCase();
+
+  if (word.length !== 5) {
+    alert("Word must be exactly 5 letters");
+    return;
+  }
+
+  shareBox.textContent = "⏳ Checking word...";
+
+  const valid = await isValidWord(word);
+  if (valid === null) {
+    alert("⚠️ Dictionary service unavailable.");
+    shareBox.textContent = "";
+    return;
+  }
+
+  if (!valid) {
+    alert("❌ Not a valid dictionary word!");
+    shareBox.textContent = "";
+    return;
+  }
+
+  // ✅ CLEAR OLD GAME + KEYBOARD STATE
+  localStorage.removeItem("keyboardState");
+
+  // Encode word so it doesn't appear in URL
+  const encoded = btoa(word);
+  const link =
+    `${window.location.origin}${window.location.pathname}#${encoded}`;
+
+  // Click-to-copy UI
+  shareBox.innerHTML = `
+    <span id="copyLink"
+          style="cursor:pointer; color:#6aaa64; font-weight:bold;">
+      🔗 Tap to copy game link
+    </span>
+    <div id="copiedMsg"
+         style="display:none; color:#aaa; font-size:14px; margin-top:6px;">
+      ✅ Link copied!
+    </div>
+  `;
+
+  document.getElementById("copyLink").onclick =
+    () => copyToClipboard(link);
+}
+
+
 // ---------------- HOME ----------------
 function goHome() {
   window.location.href = "../";
@@ -260,3 +318,4 @@ function goHome() {
 
 // ---------------- START ----------------
 initGame();
+
