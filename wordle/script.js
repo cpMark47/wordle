@@ -104,17 +104,47 @@ function createBoard() {
 
 // ---------------- CREATE GAME ----------------
 async function createGame() {
-  const word = document.getElementById("secretWord").value.toUpperCase();
-  if (word.length !== 5) return alert("Enter 5-letter word");
+  const input = document.getElementById("secretWord");
+  const shareBox = document.getElementById("shareLink");
+  const word = input.value.trim().toUpperCase();
+
+  if (word.length !== 5) {
+    alert("Word must be exactly 5 letters");
+    return;
+  }
+
+  shareBox.textContent = "⏳ Checking word...";
 
   const valid = await isValidWord(word);
-  if (!valid) return alert("Invalid word");
+  if (valid === null) {
+    alert("⚠️ Dictionary service unavailable.");
+    shareBox.textContent = "";
+    return;
+  }
 
+  if (!valid) {
+    alert("❌ Not a valid dictionary word!");
+    shareBox.textContent = "";
+    return;
+  }
+
+  // Encode word
   const encoded = btoa(word);
-  const link = `${location.origin}${location.pathname}#${encoded}`;
-  document.getElementById("shareLink").innerHTML =
-    `🔗 Share:<br><a href="${link}">${link}</a>`;
+  const link = `${window.location.origin}${window.location.pathname}#${encoded}`;
+
+  // Click-to-copy UI
+  shareBox.innerHTML = `
+    <span id="copyLink" style="cursor:pointer; color:#6aaa64; font-weight:bold;">
+      🔗 Tap to copy link
+    </span>
+    <div id="copiedMsg" style="display:none; color:#aaa; font-size:14px; margin-top:6px;">
+      ✅ Link copied!
+    </div>
+  `;
+
+  document.getElementById("copyLink").onclick = () => copyToClipboard(link);
 }
+
 
 // ---------------- SUBMIT GUESS ----------------
 async function submitGuess() {
@@ -163,6 +193,18 @@ async function submitGuess() {
   msg.textContent = "";
 }
 
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    const msg = document.getElementById("copiedMsg");
+    msg.style.display = "block";
+
+    setTimeout(() => {
+      msg.style.display = "none";
+    }, 2000);
+  });
+}
+
+
 // ---------------- HOME ----------------
 function goHome() {
   window.location.href = "../";
@@ -170,3 +212,4 @@ function goHome() {
 
 // ---------------- START ----------------
 initGame();
+
