@@ -12,6 +12,10 @@ const funnyMessages = [
   "🤣 Shakespeare didn’t write that!"
 ];
 
+// ---------------- KEYBOARD STATE ----------------
+const keyboardState =
+  JSON.parse(localStorage.getItem("keyboardState")) || {};
+
 // ---------------- DICTIONARY CHECK ----------------
 async function isValidWord(word) {
   const controller = new AbortController();
@@ -46,7 +50,10 @@ function saveState(gameOver = false) {
     });
   }
 
-  localStorage.setItem(key(), JSON.stringify({ attempts, rows, gameOver }));
+  localStorage.setItem(
+    key(),
+    JSON.stringify({ attempts, rows, gameOver })
+  );
 }
 
 // ---------------- INIT GAME ----------------
@@ -59,10 +66,11 @@ function initGame() {
     return;
   }
 
-  document.getElementById("createBox").style.display = "none";
+  document.getElementById("createBox")?.style.setProperty("display", "none");
   document.getElementById("gameBox").style.display = "block";
 
   createBoard();
+  createKeyboard();
 
   const saved = localStorage.getItem(key());
   if (!saved) return;
@@ -71,16 +79,20 @@ function initGame() {
   attempts = state.attempts;
 
   state.rows.forEach((row, i) => {
-    const cells = document.getElementById("board").children[i].children;
+    const cells =
+      document.getElementById("board").children[i].children;
     row.guess.split("").forEach((ch, j) => {
       cells[j].textContent = ch;
       cells[j].className = row.classes[j];
     });
   });
 
+  restoreKeyboard();
+
   if (state.gameOver) {
     document.getElementById("guessInput").disabled = true;
     document.getElementById("homeBtn").style.display = "block";
+    document.getElementById("board").classList.add("win");
   }
 }
 
@@ -102,82 +114,89 @@ function createBoard() {
   }
 }
 
-// ---------------- CREATE GAME ----------------
-async function createGame() {
-  const input = document.getElementById("secretWord");
-  const shareBox = document.getElementById("shareLink");
-  const word = input.value.trim().toUpperCase();
+// ---------------- KEYBOARD ----------------
+function createKeyboard() {
+  document.querySelectorAll(".key-row").forEach(row => {
+    const keys = row.dataset.keys.split(" ");
+    row.innerHTML = "";
 
-  if (word.length !== 5) {
-    alert("Word must be exactly 5 letters");
-    return;
-  }
-
-  shareBox.textContent = "⏳ Checking word...";
-
-  const valid = await isValidWord(word);
-  if (valid === null) {
-    alert("⚠️ Dictionary service unavailable.");
-    shareBox.textContent = "";
-    return;
-  }
-
-  if (!valid) {
-    alert("❌ Not a valid dictionary word!");
-    shareBox.textContent = "";
-    return;
-  }
-
-  // Encode word
-  const encoded = btoa(word);
-  const link = `${window.location.origin}${window.location.pathname}#${encoded}`;
-
-  // Click-to-copy UI
-  shareBox.innerHTML = `
-    <span id="copyLink" style="cursor:pointer; color:#6aaa64; font-weight:bold;">
-      🔗 Tap to copy link
-    </span>
-    <div id="copiedMsg" style="display:none; color:#aaa; font-size:14px; margin-top:6px;">
-      ✅ Link copied!
-    </div>
-  `;
-
-  document.getElementById("copyLink").onclick = () => copyToClipboard(link);
+    keys.forEach(k => {
+      const key = document.createElement("div");
+      key.className = "key";
+      key.textContent = k;
+      key.onclick = () => handleKey(k);
+      row.appendChild(key);
+    });
+  });
 }
 
-function colorGuess(row, guess, secret) {
+function handleKey(k) {
+  const input = document.getElementById("guessInput");
+  if (input.disabled) return;
+
+  if (k === "ENTER") submitGuess();
+  else if (k === "⌫") input.value = input.value.slice(0, -1);
+  else if (input.value.length < 5) input.value += k;
+}
+
+function updateKeyboard(letter, state) {
+  const current = keyboardState[letter];
+
+  if (current === "correct") return;
+  if (current === "present" && state === "absent") return;
+
+  keyboardState[letter] = state;
+  localStorage.setItem(
+    "keyboardState",
+    JSON.stringify(keyboardState)
+  );
+
+  restoreKeyboard();
+}
+
+function restoreKeyboard() {
+  document.querySelectorAll(".key").forEach(k => {
+    k.classList.remove("correct", "present", "absent");
+    const state = keyboardState[k.textContent];
+    if (state) k.classList.add(state);
+  });
+}
+
+// ---------------- COLOR LOGIC ----------------
+function colorGuess(row, guess) {
   const secretArr = secret.split("");
   const guessArr = guess.split("");
 
-  // Count letters in secret
   const letterCount = {};
-  for (let ch of secretArr) {
-    letterCount[ch] = (letterCount[ch] || 0) + 1;
-  }
+  secretArr.forEach(
+    c => (letterCount[c] = (letterCount[c] || 0) + 1)
+  );
 
-  // First pass: GREEN
+  // GREEN pass
   for (let i = 0; i < 5; i++) {
+    row.children[i].textContent = guess[i];
     if (guessArr[i] === secretArr[i]) {
       row.children[i].classList.add("correct");
+      updateKeyboard(guessArr[i], "correct");
       letterCount[guessArr[i]]--;
-      guessArr[i] = null; // mark used
+      guessArr[i] = null;
     }
   }
 
-  // Second pass: YELLOW / GRAY
+  // YELLOW / GREY pass
   for (let i = 0; i < 5; i++) {
     if (guessArr[i] === null) continue;
 
     if (letterCount[guessArr[i]] > 0) {
       row.children[i].classList.add("present");
+      updateKeyboard(guessArr[i], "present");
       letterCount[guessArr[i]]--;
     } else {
       row.children[i].classList.add("absent");
+      updateKeyboard(guessArr[i], "absent");
     }
   }
 }
-
-
 
 // ---------------- SUBMIT GUESS ----------------
 async function submitGuess() {
@@ -198,24 +217,24 @@ async function submitGuess() {
   }
 
   if (!valid) {
-    msg.textContent = funnyMessages[Math.floor(Math.random() * funnyMessages.length)];
+    msg.textContent =
+      funnyMessages[Math.floor(Math.random() * funnyMessages.length)];
     input.disabled = false;
     return;
   }
 
   const row = document.getElementById("board").children[attempts];
-  [...row.children].forEach((cell, i) => {
-    cell.textContent = guess[i];
-  });
-
-  colorGuess(row, guess, secret);
+  colorGuess(row, guess);
 
   attempts++;
 
   if (guess === secret || attempts === maxAttempts) {
-    msg.textContent = guess === secret ? "🎉 You won!" : `❌ Word was ${secret}`;
+    msg.textContent =
+      guess === secret ? "🎉 You won!" : `❌ Word was ${secret}`;
     saveState(true);
     document.getElementById("homeBtn").style.display = "block";
+    document.getElementById("board").classList.add("win");
+    input.disabled = true;
     return;
   }
 
@@ -225,17 +244,14 @@ async function submitGuess() {
   msg.textContent = "";
 }
 
+// ---------------- SHARE ----------------
 function copyToClipboard(text) {
   navigator.clipboard.writeText(text).then(() => {
     const msg = document.getElementById("copiedMsg");
     msg.style.display = "block";
-
-    setTimeout(() => {
-      msg.style.display = "none";
-    }, 2000);
+    setTimeout(() => (msg.style.display = "none"), 2000);
   });
 }
-
 
 // ---------------- HOME ----------------
 function goHome() {
@@ -244,5 +260,3 @@ function goHome() {
 
 // ---------------- START ----------------
 initGame();
-
-
