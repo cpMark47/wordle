@@ -145,6 +145,39 @@ async function createGame() {
   document.getElementById("copyLink").onclick = () => copyToClipboard(link);
 }
 
+function colorGuess(row, guess, secret) {
+  const secretArr = secret.split("");
+  const guessArr = guess.split("");
+
+  // Count letters in secret
+  const letterCount = {};
+  for (let ch of secretArr) {
+    letterCount[ch] = (letterCount[ch] || 0) + 1;
+  }
+
+  // First pass: GREEN
+  for (let i = 0; i < 5; i++) {
+    if (guessArr[i] === secretArr[i]) {
+      row.children[i].classList.add("correct");
+      letterCount[guessArr[i]]--;
+      guessArr[i] = null; // mark used
+    }
+  }
+
+  // Second pass: YELLOW / GRAY
+  for (let i = 0; i < 5; i++) {
+    if (guessArr[i] === null) continue;
+
+    if (letterCount[guessArr[i]] > 0) {
+      row.children[i].classList.add("present");
+      letterCount[guessArr[i]]--;
+    } else {
+      row.children[i].classList.add("absent");
+    }
+  }
+}
+
+
 
 // ---------------- SUBMIT GUESS ----------------
 async function submitGuess() {
@@ -173,10 +206,9 @@ async function submitGuess() {
   const row = document.getElementById("board").children[attempts];
   [...row.children].forEach((cell, i) => {
     cell.textContent = guess[i];
-    if (guess[i] === secret[i]) cell.classList.add("correct");
-    else if (secret.includes(guess[i])) cell.classList.add("present");
-    else cell.classList.add("absent");
   });
+
+  colorGuess(row, guess, secret);
 
   attempts++;
 
@@ -212,4 +244,5 @@ function goHome() {
 
 // ---------------- START ----------------
 initGame();
+
 
